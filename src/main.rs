@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use axum::{routing::get, Router};
 use posts::Posts;
 
@@ -15,7 +17,7 @@ mod routes {
     /// Index
     pub(crate) async fn root() -> Html<String> {
         let s = fs::read_to_string("../posts/ciao.org").await.unwrap();
-        let org = Org::parse(&s);
+        let org = Org::parse(s);
 
         Html(org.to_html())
     }

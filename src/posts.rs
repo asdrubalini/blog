@@ -7,7 +7,7 @@ use org::org_date_parse;
 use orgize::Org;
 use tokio::{fs, task};
 
-#[derive(Debug, Ord, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Post {
     pub slug: String,
     pub title: Option<String>,
@@ -16,17 +16,16 @@ pub struct Post {
     pub inner_html: String,
 }
 
-/// Sort by date
-impl PartialEq for Post {
-    fn eq(&self, other: &Self) -> bool {
-        self.date == other.date
+impl Ord for Post {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.date.cmp(&other.date)
     }
 }
 
 /// Sort by date
 impl PartialOrd for Post {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.date.partial_cmp(&other.date)
+        Some(self.cmp(other))
     }
 }
 
@@ -67,7 +66,7 @@ impl Post {
     pub async fn post_load_from_fs(path: impl AsRef<Path>) -> anyhow::Result<Post> {
         let path = path.as_ref();
         let s = fs::read_to_string(path).await?;
-        let org = Org::parse(&s);
+        let org = Org::parse(s);
 
         let slug = path
             .file_name()
@@ -78,8 +77,7 @@ impl Post {
         let title = org::org_keyword_get(&org, "title");
         let date = org::org_keyword_get(&org, "date")
             .map(org_date_parse)
-            .map(|date| date.ok())
-            .flatten();
+            .and_then(|date| date.ok());
         let html = org.to_html();
 
         Ok(Post {
