@@ -5,12 +5,31 @@ name = "blog"
 version = "0.1.0"
 
 [dependencies]
-anyhow = "1.0.86"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "fs"] }
+
 axum = "0.7.5"
+tower-http = { version = "0.5.2", features = [
+    "compression-full",
+    "cors",
+    "trace",
+] }
+# dependency of tower-http
+jobserver = "0.1.31"
+tower = "0.4.13"
+lambda_http = "0.11.1"
+axum-aws-lambda = "0.7.0"
+
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json"] }
+
+anyhow = "1.0.86"
 chrono = "0.4.38"
 futures = "0.3.30"
 indexmap = "2.2.6"
+
 # https://github.com/wooorm/markdown-rs?tab=readme-ov-file#install
 markdown = "1.0.0-alpha.17"
+
+# using alpha since it has Org -> HTML conversion
+# migrate to stable when it releases
 orgize = "0.10.0-alpha.9"
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "fs"] }

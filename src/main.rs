@@ -1,7 +1,16 @@
 #![allow(dead_code)]
 
-use axum::{routing::get, Router};
+use axum::{
+    body::Body,
+    http::{
+        header::{ACCEPT, ACCEPT_ENCODING, AUTHORIZATION, CONTENT_TYPE, ORIGIN},
+        Request,
+    },
+    routing::get,
+    Router,
+};
 use posts::Posts;
+use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 
 mod posts;
 
@@ -36,16 +45,52 @@ mod routes {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_ansi(false)
+        .without_time()
+        .with_max_level(tracing::Level::INFO)
+        .json()
+        .init();
+
     let posts = Posts::new().await?;
+
+    // Trace every request
+    let trace_layer =
+        TraceLayer::new_for_http().on_request(|_: &Request<Body>, _: &tracing::Span| {
+            tracing::info!(message = "begin request!")
+        });
+
+    // Set up CORS
+    let cors_layer = CorsLayer::new()
+        .allow_headers([ACCEPT, ACCEPT_ENCODING, AUTHORIZATION, CONTENT_TYPE, ORIGIN])
+        .allow_methods(tower_http::cors::Any)
+        .allow_origin(tower_http::cors::Any);
 
     let app = Router::new()
         .route("/", get(routes::root))
         .route("/post/:slug", get(routes::get_post))
+        .layer(cors_layer)
+        .layer(trace_layer)
+        .layer(CompressionLayer::new().gzip(true).deflate(true))
         .with_state(posts);
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    // Serve using axum's server if compiled in debug mode
+    #[cfg(debug_assertions)]
+    {
+        let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
+    }
+
+    // Serve with AWS's Lambda if compiled in release mode
+    #[cfg(not(debug_assertions))]
+    {
+        let app = tower::ServiceBuilder::new()
+            .layer(axum_aws_lambda::LambdaLayer::default())
+            .service(app);
+
+        lambda_http::run(app).await.unwrap();
+    }
 
     Ok(())
 }
