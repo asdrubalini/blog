@@ -1,0 +1,7 @@
+/target
+/result
+/result-lib
+.direnvposts/
+posts/
+.vscode/
+.direnv/

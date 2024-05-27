@@ -1,0 +1,16 @@
+[package]
+authors = ["Asdrubalini <asdrubalini@mail.com>"]
+edition = "2021"
+name = "blog"
+version = "0.1.0"
+
+[dependencies]
+anyhow = "1.0.86"
+axum = "0.7.5"
+chrono = "0.4.38"
+futures = "0.3.30"
+indexmap = "2.2.6"
+# https://github.com/wooorm/markdown-rs?tab=readme-ov-file#install
+markdown = "1.0.0-alpha.17"
+orgize = "0.10.0-alpha.9"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "fs"] }
