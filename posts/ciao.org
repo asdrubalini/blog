@@ -1,0 +1,47 @@
+#+title: An example Org document (this line is a keyword)
+#+date: <2024-05-27 Mon>
+
+
+The document begins with optional zeroth section (everything before
+the first heading), followed by a sequence of headings. (paragraph)
+
+:note:
+Zeroth section can contain other elements - keyword, paragraph,
+and drawer in this example.
+
+The drawer, in turn, contains the previous and this paragraph; and
+this paragraph consists of plain text objects, and a single *bold
+markup*.
+:end:
+
+* Heading
+
+- Item 1
+
+- Item 2
+  :drawer:
+  inside item 2
+  :end:
+
+Contains an optional section that is, similar to zeroth section,
+followed by other subheadings.
+
+** Sub-heading 1 with no section and no child headings
+** Sub-heading 2
+... has a section, but not child subheadings.
+
+* Another heading
+
+
+
+This paragraph will not contain
+a long sequence of spaces before "a".
+
+This paragraph does not have leading spaces according to the parser.
+
+#+begin_src emacs-lisp
+  (+ 1 2)
+#+end_src
+The above source block preserves two leading spaces inside the code
+after removing the common indentation.
+
