@@ -18,3 +18,6 @@ watch *ARGS:
 # statically linked binary
 container:
     nix build '.#container'
+
+deploy:
+    fly deploy --local-only
