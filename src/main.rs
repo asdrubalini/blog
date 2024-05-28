@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::{env, fs};
+
 use axum::{
     body::Body,
     http::{
@@ -74,23 +76,9 @@ async fn main() -> anyhow::Result<()> {
         .layer(CompressionLayer::new().gzip(true).deflate(true))
         .with_state(posts);
 
-    // Serve using axum's server if compiled in debug mode
-    #[cfg(debug_assertions)]
-    {
-        let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
-        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-        axum::serve(listener, app).await.unwrap();
-    }
-
-    // Serve with AWS's Lambda if compiled in release mode
-    #[cfg(not(debug_assertions))]
-    {
-        let app = tower::ServiceBuilder::new()
-            .layer(axum_aws_lambda::LambdaLayer::default())
-            .service(app);
-
-        lambda_http::run(app).await.unwrap();
-    }
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
     Ok(())
 }

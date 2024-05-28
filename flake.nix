@@ -43,9 +43,26 @@
             cargo-watch
             just
             treefmt
+            flyctl
           ];
         };
         packages.default = self'.packages.blog;
+
+        packages.container = pkgs.dockerTools.buildImage {
+          name = "blog";
+          tag = self'.packages.blog.version;
+
+          copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ self'.packages.blog ./posts ];
+            pathsToLink = [ "/bin" "/bin/posts" ];
+          };
+
+          config = {
+            Cmd = [ "/bin/blog" ];
+            WorkingDir = "/bin";
+          };
+        };
       };
     };
 }

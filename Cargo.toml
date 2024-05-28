@@ -16,8 +16,6 @@ tower-http = { version = "0.5.2", features = [
 # dependency of tower-http
 jobserver = "0.1.31"
 tower = "0.4.13"
-lambda_http = "0.11.1"
-axum-aws-lambda = "0.7.0"
 
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["json"] }

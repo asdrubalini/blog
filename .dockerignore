@@ -1,0 +1,8 @@
+# flyctl launch added from .gitignore
+target
+result
+result-lib
+**/.direnvposts
+**/.vscode
+**/.direnv
+fly.toml
