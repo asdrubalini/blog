@@ -1,13 +1,8 @@
 #![allow(dead_code)]
 
-use std::{env, fs};
-
+use anyhow::Ok;
 use axum::{
-    body::Body,
-    http::{
-        header::{ACCEPT, ACCEPT_ENCODING, AUTHORIZATION, CONTENT_TYPE, ORIGIN},
-        Request,
-    },
+    http::header::{ACCEPT, ACCEPT_ENCODING, AUTHORIZATION, CONTENT_TYPE, ORIGIN},
     routing::get,
     Router,
 };
@@ -16,21 +11,18 @@ use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLay
 
 mod posts;
 
+const CURRENT_GIT_HASH: &str = include_str!("../.git/refs/heads/master");
+
 mod routes {
-    use crate::posts::Posts;
+    use crate::{posts::Posts, CURRENT_GIT_HASH};
     use axum::{
         extract::{Path, State},
         response::Html,
     };
-    use orgize::Org;
-    use tokio::fs;
 
     /// Index
     pub(crate) async fn root() -> Html<String> {
-        let s = fs::read_to_string("../posts/ciao.org").await.unwrap();
-        let org = Org::parse(s);
-
-        Html(org.to_html())
+        Html(CURRENT_GIT_HASH.to_string())
     }
 
     /// /post/:slug
@@ -45,8 +37,7 @@ mod routes {
     }
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn web() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_ansi(false)
         .without_time()
@@ -54,13 +45,10 @@ async fn main() -> anyhow::Result<()> {
         .json()
         .init();
 
-    let posts = Posts::new().await?;
+    let posts = Posts::new()?;
 
     // Trace every request
-    let trace_layer =
-        TraceLayer::new_for_http().on_request(|_: &Request<Body>, _: &tracing::Span| {
-            tracing::info!(message = "begin request!")
-        });
+    let trace_layer = TraceLayer::new_for_http();
 
     // Set up CORS
     let cors_layer = CorsLayer::new()
@@ -78,7 +66,17 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+
+    let j = tokio::task::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    println!("Started listening on {:?}", addr);
+    j.await.unwrap();
+
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    web().await?;
 
     Ok(())
 }

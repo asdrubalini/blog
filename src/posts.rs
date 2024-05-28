@@ -1,11 +1,10 @@
 use std::{path::Path, sync::Arc};
 
 use chrono::NaiveDate;
-use futures::future::join_all;
+use include_directory::{include_directory, Dir};
 use indexmap::IndexMap;
 use org::org_date_parse;
 use orgize::Org;
-use tokio::{fs, task};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Post {
@@ -63,12 +62,11 @@ mod org {
 }
 
 impl Post {
-    pub async fn post_load_from_fs(path: impl AsRef<Path>) -> anyhow::Result<Post> {
-        let path = path.as_ref();
-        let s = fs::read_to_string(path).await?;
-        let org = Org::parse(s);
+    pub fn parse(path: impl AsRef<Path>, data: &'static str) -> anyhow::Result<Post> {
+        let org = Org::parse(data);
 
         let slug = path
+            .as_ref()
             .file_name()
             .unwrap()
             .to_string_lossy()
@@ -98,11 +96,12 @@ pub struct Posts {
     posts: Arc<IndexMap<String, Post>>,
 }
 
-const POSTS_PATH: &str = "./posts";
+/// Posts are loaded into the binary
+static POSTS: Dir<'_> = include_directory!("$CARGO_MANIFEST_DIR/posts");
 
 impl Posts {
-    pub async fn new() -> anyhow::Result<Self> {
-        let posts = Posts::posts_read(POSTS_PATH).await?;
+    pub fn new() -> anyhow::Result<Self> {
+        let posts = Posts::posts_read()?;
         let posts = IndexMap::from_iter(posts.into_iter().map(|p| (p.slug.to_owned(), p)));
         let posts = Arc::new(posts);
 
@@ -113,30 +112,12 @@ impl Posts {
         self.posts.get(slug.as_ref())
     }
 
-    async fn posts_read(path: impl AsRef<Path>) -> anyhow::Result<Vec<Post>> {
-        let mut entries = fs::read_dir(path).await.unwrap();
-        let mut futures = Vec::new();
-
-        while let Some(entry) = entries.next_entry().await.unwrap() {
-            let path = entry.path();
-
-            if !path.is_file() {
-                continue;
-            }
-
-            if path.extension().and_then(|s| s.to_str()) != Some("org") {
-                continue;
-            }
-
-            let fut = task::spawn(async move { Post::post_load_from_fs(path).await });
-            futures.push(fut);
-        }
-
-        let mut posts = join_all(futures)
-            .await
-            .into_iter()
-            .map(|res| res.unwrap().unwrap())
-            .collect::<Vec<_>>();
+    fn posts_read() -> anyhow::Result<Vec<Post>> {
+        let mut posts: Vec<_> = POSTS
+            .files()
+            .filter(|f| f.path().extension().and_then(|s| s.to_str()) == Some("org"))
+            .filter_map(|f| Post::parse(f.path(), f.contents_utf8().unwrap()).ok())
+            .collect();
 
         // sort them by date
         posts.sort();

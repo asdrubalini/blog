@@ -54,13 +54,12 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
-            paths = [ self'.packages.blog ./posts ];
-            pathsToLink = [ "/bin" "/bin/posts" ];
+            paths = [ self'.packages.blog ];
+            pathsToLink = [ "/bin" ];
           };
 
           config = {
             Cmd = [ "/bin/blog" ];
-            WorkingDir = "/bin";
           };
         };
       };
