@@ -10,14 +10,15 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
-  outputs = inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = import inputs.systems;
+  outputs = inputs@{ nixpkgs, flake-parts, systems, rust-flake, treefmt-nix, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import systems;
       imports = [
-        inputs.treefmt-nix.flakeModule
-        inputs.rust-flake.flakeModules.default
-        inputs.rust-flake.flakeModules.nixpkgs
+        treefmt-nix.flakeModule
+        rust-flake.flakeModules.default
+        rust-flake.flakeModules.nixpkgs
       ];
+
       perSystem = { config, self', pkgs, lib, system, ... }: {
         rust-project.crane.args = {
           buildInputs = lib.optionals pkgs.stdenv.isDarwin (

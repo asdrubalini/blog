@@ -11,7 +11,8 @@ use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLay
 
 mod posts;
 
-const CURRENT_GIT_HASH: &str = include_str!("../.git/refs/heads/master");
+// const CURRENT_GIT_HASH: &str = include_str!("../.git/refs/heads/master");
+const CURRENT_GIT_HASH: &str = "ciao";
 
 mod routes {
     use crate::{posts::Posts, CURRENT_GIT_HASH};
