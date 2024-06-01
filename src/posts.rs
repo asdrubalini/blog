@@ -91,7 +91,7 @@ impl Post {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Posts {
     posts: Arc<IndexMap<String, Post>>,
 }

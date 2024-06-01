@@ -25,10 +25,12 @@ chrono = "0.4.38"
 futures = "0.3.30"
 indexmap = "2.2.6"
 
-# https://github.com/wooorm/markdown-rs?tab=readme-ov-file#install
-markdown = "1.0.0-alpha.17"
-
 # using alpha since it has Org -> HTML conversion
 # migrate to stable when it releases
 orgize = "0.10.0-alpha.9"
 include_directory = "0.1.1"
+askama = { version = "0.12.1", features = ["with-axum"] }
+askama_axum = "0.4.0"
+axum_static = "1.7.1"
+
+# For fonts I use https://github.com/be5invis/Iosevka/
