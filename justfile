@@ -9,9 +9,8 @@ fmt:
 run *ARGS:
     cargo run {{ARGS}}
 
-# Run 'cargo watch' to run the project (auto-recompiles)
-watch *ARGS:
-    cargo watch -x "run -- {{ARGS}}"
+watch:
+    cargo watch -x r
 
 # Build the app in release mode as statically linked binary with
 # Nix, and then generate a FROM scratch docker image with the
