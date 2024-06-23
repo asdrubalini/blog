@@ -27,6 +27,16 @@
           overlays = [ (import rust-overlay) ];
         };
 
+        toolchain =
+          pkgs.rust-bin.stable.latest.default.override
+            {
+              extensions = [
+                "rust-src"
+                "rust-analyzer"
+                "clippy"
+              ];
+            };
+
         craneLib = crane.mkLib pkgs;
 
         # Only keeps markdown files
@@ -81,6 +91,11 @@
           # Additional dev-shell environment variables can be set directly
           # MY_CUSTOM_DEV_URL = "http://localhost:3000";
 
+          shellHook = ''
+            # For rust-analyzer 'hover' tooltips to work.
+            export RUST_SRC_PATH="${toolchain}/lib/rustlib/src/rust/library";
+          '';
+
           # Automatically inherit any build inputs from `blog`
           inputsFrom = [ blog ];
 
@@ -89,7 +104,6 @@
           packages = with pkgs; [
             cargo-audit
             cargo-watch
-            rust-analyzer
             just
             treefmt
             flyctl
