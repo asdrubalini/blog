@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use std::fmt::Debug;
+use std::{env, fmt::Debug};
 
 use anyhow::Ok;
 use askama_axum::Response;
@@ -25,53 +25,8 @@ use tower_http::{
 use tracing::info;
 
 mod posts;
-
-mod templates {
-    use askama_axum::Template;
-
-    const TITLE_PREFIX: &str = "Asdrubalini's Blog";
-
-    #[derive(Debug, Clone)]
-    pub struct Partials {
-        id: String,
-    }
-
-    #[derive(Template)]
-    #[template(path = "index.html")]
-    pub struct IndexTemplate {
-        pub title: String,
-        pub name: String,
-    }
-}
-
-mod routes {
-    use crate::{posts::Posts, state::AppState, templates::IndexTemplate};
-    use axum::{
-        extract::{Path, State},
-        response::Html,
-    };
-
-    /// Index
-    pub(crate) async fn root() -> IndexTemplate {
-        let html = IndexTemplate {
-            title: "Asdrubalini's Blog".to_string(),
-            name: "Asdrubalini!".to_string(),
-        };
-
-        html
-    }
-
-    /// /post/:slug
-    pub(crate) async fn get_post(
-        Path(slug): Path<String>,
-        State(state): State<AppState>,
-    ) -> Html<String> {
-        match state.posts.get(slug) {
-            Some(post) => Html(post.inner_html.to_owned()),
-            None => Html("404 post not found".to_string()),
-        }
-    }
-}
+mod routes;
+mod templates;
 
 mod state {
     use anyhow::Ok;
@@ -138,6 +93,7 @@ async fn web() -> anyhow::Result<()> {
 
     let handle = tokio::task::spawn(async move { axum::serve(listener, app).await.unwrap() });
     println!("Started listening on {:?}", addr);
+
     handle.await.unwrap();
 
     Ok(())
